@@ -8,7 +8,6 @@ jobs:
   deploy:
     runs-on: [laptop-par]
     
-    # Permission ini dibutuhkan agar GITHUB_TOKEN bisa melakukan fetch code
     permissions:
       contents: read 
 
@@ -30,11 +29,11 @@ jobs:
           echo "PROJECT_PATH=$PROJECT_PATH" >> $GITHUB_ENV
           echo "✅ Found project at: $PROJECT_PATH"
 
-      # Step 1: Pull latest changes (DIPERBAIKI)
+      # Step 1: Pull latest changes
       - name: Pull latest changes
         working-directory: ${{ env.PROJECT_PATH }}
         run: |
-          # Cek apakah folder ini sudah menjadi git repository?
+          # Cek apakah folder ini sudah menjadi git repository
           if [ ! -d ".git" ]; then
             echo "⚠️ .git directory not found. Initializing new git..."
             git init
@@ -89,3 +88,4 @@ jobs:
           else
             echo "❌ Deployment Error, Check the log."
           fi
+
