@@ -1,21 +1,40 @@
 version: '3.8'
 
 services:
-  # Nginx Web Server (Custom Build)
+  # 1. JAVA BACKEND (Layanan Baru)
+  java-api:
+    build:
+      context: ./comic-api # Docker akan mencari Dockerfile di dalam folder ini
+      dockerfile: Dockerfile
+    container_name: comic-java-api
+    ports:
+      - "8080:8080" # Akses API via localhost:8080
+    depends_on:
+      - mysql
+    environment:
+      # PENTING: Gunakan nama service 'mysql' sebagai host, bukan localhost
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_komik?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: password # Sesuai dengan MYSQL_ROOT_PASSWORD di bawah
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    networks:
+      - app-network
+
+  # 2. Nginx Web Server (Frontend PHP)
   nginx:
     build:
       context: .
       dockerfile: Dockerfile.nginx
     ports:
-      - "85:85"
+      - "85:80"
     volumes:
-      - .:/var/www/myphpapp
+      - ./comic-web:/var/www/myphpapp # Arahkan ke folder comic-web
     depends_on:
       - php
     networks:
       - app-network
 
-  # PHP-FPM (untuk Nginx)
+  # 3. PHP-FPM
   php:
     build:
       context: .
@@ -23,33 +42,36 @@ services:
     user: "1000:1000"
     working_dir: /var/www/myphpapp
     volumes:
-      - .:/var/www/myphpapp
+      - ./comic-web:/var/www/myphpapp # Arahkan ke folder comic-web
     depends_on:
       - mysql
     environment:
-      DB_HOST: mysql
+      # PHP akan menghubungi MySQL lewat nama service ini
+      DB_HOST: mysql 
       DB_NAME: db_komik
       DB_USER: root
       DB_PASSWORD: password
     networks:
       - app-network
 
-  # MySQL Database Server
+  # 4. MySQL Database Server
   mysql:
     image: mysql:8.0
+    container_name: comic-db
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: db_komik
-      MYSQL_USER: appuser
+      # User tambahan (opsional, karena kita pakai root di atas)
+      MYSQL_USER: appuser 
       MYSQL_PASSWORD: password
     volumes:
       - mysql_data:/var/lib/mysql
     ports:
-      - "3308:3306"
+      - "3308:3306" # Akses DB dari luar docker pakai port 3308
     networks:
       - app-network
 
-  # phpMyAdmin untuk Database Management
+  # 5. phpMyAdmin
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     ports:
@@ -62,11 +84,11 @@ services:
     networks:
       - app-network
 
-# Persistent Volume untuk MySQL Data
+# Persistent Volume
 volumes:
   mysql_data:
 
-# Custom Network untuk Container Communication
+# Network
 networks:
   app-network:
     driver: bridge
