@@ -8,7 +8,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -23,38 +22,66 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         this.jwtUtil = jwtUtil;
     }
 
+    /**
+     * Skip filter untuk public endpoints & Swagger
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        String method = request.getMethod();
+
+        // Swagger & docs
+        if (path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs") ||
+            path.equals("/swagger-ui.html") || path.startsWith("/webjars") ||
+            path.equals("/favicon.ico")) return true;
+
+        // Login/register
+        if (path.startsWith("/api/auth")) return true;
+
+        // GET comics & genres
+        if (path.startsWith("/api/comics") && method.equals("GET")) return true;
+        if (path.startsWith("/api/genres") && method.equals("GET")) return true;
+
+        // Register & update user
+        if (path.startsWith("/api/users") && (method.equals("POST") || method.equals("PUT"))) return true;
+
+        return false;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
-        String token = null;
-        String username = null;
-
-        // 1. Cek apakah ada header "Authorization: Bearer <token>"
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7); // Ambil token setelah "Bearer "
-            try {
-                // 2. Validasi Token
-                username = jwtUtil.validateToken(token);
-            } catch (Exception e) {
-                System.out.println("Token Error: " + e.getMessage());
-            }
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return;
         }
 
-        // 3. Jika token valid, set user sebagai "Login"
+        String token;
+        String username;
+        try {
+            token = authHeader.substring(7);
+            username = jwtUtil.validateToken(token); // validasi token
+        } catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = User.builder()
                     .username(username)
-                    .password("") // Password tidak diperlukan untuk validasi token
+                    .password("")
                     .roles("ADMIN")
                     .build();
 
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    userDetails, null, userDetails.getAuthorities());
-            
-            SecurityContextHolder.getContext().setAuthentication(auth);
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
         filterChain.doFilter(request, response);

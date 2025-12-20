@@ -23,33 +23,49 @@ public class SecurityConfig {
         this.jwtAuthFilter = jwtAuthFilter;
     }
 
-    // --- BAGIAN INI YANG MEMPERBAIKI ERROR ANDA ---
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // Menggunakan enkripsi BCrypt
+        return new BCryptPasswordEncoder();
     }
-    // ----------------------------------------------
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
             .csrf(csrf -> csrf.disable())
+
             .authorizeHttpRequests(auth -> auth
-                // 1. Izin Login & Register (Publik)
+                // Swagger & docs
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**",
+                                 "/swagger-ui.html", "/webjars/**", "/favicon.ico").permitAll()
+
+                // Auth
                 .requestMatchers("/api/auth/**").permitAll()
-                
-                // 2. Izin Baca Komik (Publik - GET only)
+
+                // Users
+                .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+                .requestMatchers(HttpMethod.PUT, "/api/users/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/users/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/users/**").authenticated()
+
+                // Comics
                 .requestMatchers(HttpMethod.GET, "/api/comics/**").permitAll()
-                
-                // 3. Sisanya (Tambah/Edit/Hapus) WAJIB LOGIN
+                .requestMatchers(HttpMethod.POST, "/api/comics/**").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/comics/**").authenticated()
+
+                // Genres
+                .requestMatchers(HttpMethod.GET, "/api/genres/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/genres/**").authenticated()
+
+                // Default
                 .anyRequest().authenticated()
             )
-            // Matikan session (Stateless) karena pakai JWT
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
