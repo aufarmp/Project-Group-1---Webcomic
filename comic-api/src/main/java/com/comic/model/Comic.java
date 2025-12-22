@@ -2,33 +2,35 @@ package com.comic.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import java.time.LocalDate; // Untuk format tanggal (YYYY-MM-DD)
+import java.time.LocalDate;
 
 @Entity
-@Table(name = "tb_komik") // Sesuai nama tabel di database
+@Table(name = "tb_komik") // Sesuai nama tabel
 @Data
 public class Comic {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "komik_id") // Mapping ke kolom Primary Key database
+    @Column(name = "komik_id") // Sesuai nama kolom PK
     private Long id;
 
-    @Column(name = "title")
+    @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "author")
+    @Column(name = "author", nullable = false)
     private String author;
 
-    @Column(name = "cover_image") // Mapping ke kolom snake_case
+    @Column(name = "cover_image") // Bisa null
     private String coverImage;
 
-    @Column(name = "description", columnDefinition = "TEXT") // Agar muat teks panjang
+    @Column(name = "description", columnDefinition = "TEXT", nullable = false)
     private String description;
 
-    @Column(name = "status")
-    private String status; // ongoing / completed
+    @Column(name = "status", nullable = false)
+    private String status; 
+    // Catatan: Wajib diisi "ongoing" atau "completed" persis (huruf kecil)
 
-    @Column(name = "first_chapter_at")
-    private LocalDate firstChapterAt; // Tipe data tanggal
+    @Column(name = "first_chapter_at", nullable = false)
+    private LocalDate firstChapterAt; 
+    // Catatan: Format JSON harus "YYYY-MM-DD"
 }

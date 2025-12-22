@@ -36,6 +36,7 @@ public class UserController {
         return service.findById(id);
     }
 
+    // 4. Update User by ID
     @PutMapping("/{id}")
     public User update(@PathVariable Long id, @RequestBody User requestUser) {
         // 1. Ambil data asli dari database (yang created_at nya masih ada)
@@ -57,7 +58,7 @@ public class UserController {
         return service.save(dbUser);
     }
 
-    // 5. Hapus User
+    // 5. Hapus User by ID
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         service.delete(id);
