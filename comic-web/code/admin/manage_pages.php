@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['new_pages'])) {
             $server_path = $upload_dir . $unique_filename;
             
             if (move_uploaded_file($page_tmp_name, $server_path)) {
-                $db_image_path = '/comic-web/assets/comic_pages/' . $komik_id . '/' . $chapter_number . '/' . $unique_filename;
+                $db_image_path = '/assets/comic_pages/' . $komik_id . '/' . $chapter_number . '/' . $unique_filename;
 
                 $sql_insert_page = "INSERT INTO tb_pages (chapter_id, page_number, image_url) VALUES (?, ?, ?)";
                 $stmt_insert_page = mysqli_prepare($conn, $sql_insert_page);
@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['replace_page_id']) && 
         $server_path = $upload_dir . $unique_filename;
 
         if (move_uploaded_file($new_page_tmp_name, $server_path)) {
-            $db_image_path = '/comic-web/assets/comic_pages/' . $komik_id . '/' . $chapter_number . '/' . $unique_filename;
+            $db_image_path = '/assets/comic_pages/' . $komik_id . '/' . $chapter_number . '/' . $unique_filename;
 
             $sql_update_page = "UPDATE tb_pages SET image_url = ? WHERE page_id = ?";
             $stmt_update_page = mysqli_prepare($conn, $sql_update_page);

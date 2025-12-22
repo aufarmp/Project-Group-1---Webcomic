@@ -24,17 +24,25 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody AuthRequest req) {
-        // 1. Ambil User
-        UserDetails user = userDetailsService.loadUserByUsername(req.getUsername());
+    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
+        // ... (Logika autentikasi yang sudah ada) ...
+        
+        // Ambil UserDetails
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        
+        // Generate Token
+        String jwt = jwtUtils.generateJwtToken(authentication);
 
-        // 2. Cek Password (Tanpa Log aneh-aneh)
-        if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Password Salah!");
-        }
+        // Ambil Role (ambil role pertama saja)
+        String role = userDetails.getAuthorities().stream()
+                .findFirst().get().getAuthority();
 
-        // 3. Generate Token
-        String token = jwtUtil.generateToken(user.getUsername());
-        return new AuthResponse(token);
+        // RETURN JSON LENGKAP
+        return ResponseEntity.ok(new AuthResponse(
+                jwt, 
+                userDetails.getId(), 
+                role, 
+                userDetails.getUsername()
+        ));
     }
 }

@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_picture'])) {
         $file_extension = pathinfo($file_info['name'], PATHINFO_EXTENSION);
         $unique_filename = 'user_' . $user_id . '_' . time() . '.' . $file_extension;
         $server_path = $upload_dir . $unique_filename;
-        $db_path = '/comic-web/assets/profile_pictures/' . $unique_filename;
+        $db_path = '/assets/profile_pictures/' . $unique_filename;
 
         if (move_uploaded_file($file_info['tmp_name'], $server_path)) {
 

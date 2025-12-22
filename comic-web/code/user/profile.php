@@ -14,7 +14,7 @@ mysqli_stmt_execute($stmt_user);
 $result_user = mysqli_stmt_get_result($stmt_user);
 $user_data = mysqli_fetch_assoc($result_user);
 
-$profile_pic = !empty($user_data['profile_picture_url']) ? $user_data['profile_picture_url'] : '/comic_project/comic-web/assets/profile_pictures/default.jpg';
+$profile_pic = !empty($user_data['profile_picture_url']) ? $user_data['profile_picture_url'] : '/assets/profile_pictures/default.jpg';
 ?>
 
 <!DOCTYPE html>
