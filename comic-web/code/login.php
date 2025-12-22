@@ -5,7 +5,8 @@ header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
-// Konfigurasi URL API Spring Boot
+include 'connection.php'; 
+
 define('API_LOGIN_URL', 'http://java-api:8080/api/auth/login');
 
 if (isset($_SESSION['access_token'])) {
@@ -40,7 +41,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $curl_error = curl_error($ch);
     curl_close($ch);
 
-    // Cek error jaringan
     if ($curl_error) {
         $_SESSION['login_error'] = "Server Error: Tidak dapat menghubungi API.";
         header("Location: login.php");
@@ -49,36 +49,51 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $result = json_decode($response, true);
 
-    // 4. LOGIKA SUKSES/GAGAL
     if ($http_code == 200 && isset($result['accessToken'])) {
-        // --- LOGIN BERHASIL ---
         
-        // Simpan Token
         $_SESSION['access_token'] = $result['accessToken'];
         $_SESSION['token_type'] = $result['tokenType'];
         $_SESSION['username'] = $username;
 
-        $tokenParts = explode('.', $result['accessToken']);
+        if (isset($conn)) {
+            $stmt_id = mysqli_prepare($conn, "SELECT user_id FROM tb_user WHERE username = ?");
+            if ($stmt_id) {
+                mysqli_stmt_bind_param($stmt_id, "s", $username);
+                mysqli_stmt_execute($stmt_id);
+                $res_id = mysqli_stmt_get_result($stmt_id);
+                
+                if ($row_id = mysqli_fetch_assoc($res_id)) {
+                    $_SESSION['user_id'] = $row_id['user_id'];
+                }
+                mysqli_stmt_close($stmt_id);
+            }
+        }
         
-        // Decode bagian Payload
+        if (!isset($_SESSION['user_id'])) {
+             $_SESSION['user_id'] = 0; 
+        }
+
+        $tokenParts = explode('.', $result['accessToken']);
         $tokenPayload = base64_decode($tokenParts[1]);
         $jwtData = json_decode($tokenPayload, true);
 
-        $role = 'user'; 
+        $role = 'user'; // Default
+
+        $roles_from_jwt = isset($jwtData['roles']) ? $jwtData['roles'] : [];
         
-        // Logika pengecekan role di dalam JWT
-        if (isset($jwtData['roles'])) {
-            if (is_array($jwtData['roles']) && in_array('ROLE_ADMIN', $jwtData['roles'])) {
-                $role = 'admin';
-            } 
-            elseif ($jwtData['roles'] == 'ROLE_ADMIN') {
-                $role = 'admin';
-            }
+        if (!is_array($roles_from_jwt)) {
+            $roles_from_jwt = array($roles_from_jwt);
+        }
+
+        if (in_array('admin', $roles_from_jwt) || 
+            in_array('ADMIN', $roles_from_jwt) || 
+            in_array('ROLE_ADMIN', $roles_from_jwt)) {
+            
+            $role = 'admin';
         }
         
         $_SESSION['role'] = $role;
 
-        // Redirect sesuai Role
         if ($role == 'admin') {
             header("Location: admin/dashboard.php");
         } else {
@@ -87,6 +102,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
 
     } else {
+
         $errorMsg = isset($result['message']) ? $result['message'] : "Username atau Password salah.";
         $_SESSION['login_error'] = $errorMsg;
         header("Location: login.php");
@@ -114,7 +130,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 echo '<div class="feedback error">' . $_SESSION['login_error'] . '</div>';
                 unset($_SESSION['login_error']);
             } elseif (isset($_GET['status']) && $_GET['status'] == 'registered') {
-
                 echo '<div class="feedback success">Registration successful! Please log in with your account.</div>';
             }
             ?>

@@ -8,10 +8,14 @@ header("Pragma: no-cache");
 include '../connection.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
-    header("Location: ../login.php");
+
+    if (isset($_SESSION['role']) && $_SESSION['role'] == 'admin') {
+        header("Location: ../admin/dashboard.php");
+    } else {
+        header("Location: ../login.php");
+    }
     exit();
 }
-$user_id = $_SESSION['user_id'];
 ?>
 
 <!DOCTYPE html>

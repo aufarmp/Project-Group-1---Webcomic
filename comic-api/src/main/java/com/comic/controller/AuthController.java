@@ -1,44 +1,53 @@
 package com.comic.controller;
 
-import com.comic.config.JwtUtil;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import com.comic.model.AuthRequest;
-import com.comic.model.AuthResponse;
-import com.comic.service.MyUserDetailsService;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import com.comic.dto.LoginRequest;
+import com.comic.dto.JwtResponse;
+
+import com.comic.service.UserDetailsImpl; 
+import com.comic.config.JwtUtil; 
+
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*") 
 public class AuthController {
 
-    private final JwtUtil jwtUtil;
-    private final MyUserDetailsService userDetailsService;
-    private final PasswordEncoder passwordEncoder;
+    @Autowired
+    AuthenticationManager authenticationManager;
 
-    public AuthController(JwtUtil jwtUtil, MyUserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
-        this.jwtUtil = jwtUtil;
-        this.userDetailsService = userDetailsService;
-        this.passwordEncoder = passwordEncoder;
-    }
+    @Autowired
+    JwtUtil jwtUtil;
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
         
+        String jwt = jwtUtil.generateJwtToken(authentication); 
+
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         
-        String jwt = jwtUtils.generateJwtToken(authentication);
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(item -> item.getAuthority())
+                .collect(Collectors.toList());
 
-        String role = userDetails.getAuthorities().stream()
-                .findFirst().get().getAuthority();
-
-        return ResponseEntity.ok(new AuthResponse(
-                jwt, 
-                userDetails.getId(), 
-                role, 
-                userDetails.getUsername()
-        ));
+        return ResponseEntity.ok(new JwtResponse(jwt,
+                                                 userDetails.getId(),
+                                                 userDetails.getUsername(),
+                                                 userDetails.getEmail(),
+                                                 roles));
     }
 }
