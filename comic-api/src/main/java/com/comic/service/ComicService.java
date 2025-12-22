@@ -27,16 +27,8 @@ public class ComicService {
         return comicRepo.save(comic);
     }
 
-    public Comic update(Long id, Comic comicDetails) {
-        return comicRepo.findById(id).map(comic -> {
-            comic.setTitle(comicDetails.getTitle());
-            comic.setAuthor(comicDetails.getAuthor());
-            comic.setCoverImage(comicDetails.getCoverImage());
-            comic.setDescription(comicDetails.getDescription());
-            comic.setStatus(comicDetails.getStatus());
-            comic.setFirstChapterAt(comicDetails.getFirstChapterAt());
-            return comicRepo.save(comic);
-        }).orElse(null);
+    public Comic update(Long id, Comic comic) {
+        return comicRepo.save(comic);
     }
 
     public void delete(Long id) {

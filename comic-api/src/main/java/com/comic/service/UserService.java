@@ -33,7 +33,6 @@ public class UserService {
         repo.deleteById(id);
     }
 
-    // Logika Pencarian Adaptasi dari PDF
     public List<User> search(String username, String email) {
         if (username != null && email != null) {
             return repo.findByUsernameContainingIgnoreCaseAndEmailContainingIgnoreCase(username, email);
