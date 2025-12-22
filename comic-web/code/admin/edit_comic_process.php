@@ -43,7 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $server_path = $upload_dir . $unique_filename;
 
         if (move_uploaded_file($image_tmp_name, $server_path)) {
-            $db_image_path = '/comic-web/assets/comic_cover/' . $unique_filename;
+            $db_image_path = '/assets/comic_cover/' . $unique_filename;
         }
     }
 

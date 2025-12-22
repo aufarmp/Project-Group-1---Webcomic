@@ -5,10 +5,11 @@ header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
-include 'connection.php'; 
+// Konfigurasi URL API Spring Boot
+define('API_LOGIN_URL', 'http://java-api:8080/api/auth/login');
 
-if (isset($_SESSION['user_id'])) {
-    if ($_SESSION['role'] == 'admin') {
+if (isset($_SESSION['access_token'])) {
+    if (isset($_SESSION['role']) && $_SESSION['role'] == 'admin') {
         header("Location: admin/dashboard.php");
     } else {
         header("Location: user/homepage.php");
@@ -20,46 +21,77 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    $stmt = $conn->prepare("SELECT user_id, username, password, role FROM tb_user WHERE username = ? OR email = ?");
-    $stmt->bind_param("ss", $username, $username);
-    
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $payload = json_encode(array(
+        "username" => $username,
+        "password" => $password
+    ));
 
-    if ($result->num_rows === 1) {
-        $user = $result->fetch_assoc();
-        
-        if ($password === $user['password']) {
-            $_SESSION['user_id'] = $user['user_id'];
-            $_SESSION['role'] = $user['role'];
+    $ch = curl_init(API_LOGIN_URL);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'Content-Type: application/json',
+        'Content-Length: ' . strlen($payload)
+    ));
 
-            // JS utk nimpa halaman login dengan halaman dashboard/homepage
-            echo '<script type="text/javascript">';
-            if ($user['role'] == 'admin') {
-                echo 'window.location.replace("admin/dashboard.php");';
-            } else {
-                echo 'window.location.replace("user/homepage.php");';
-            }
-            echo '</script>';
-            
-            // exit() buat stop eksekusi PHP setelah eksekusi JS
-            exit();
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_error = curl_error($ch);
+    curl_close($ch);
 
-        } else {
-            // Password Salah
-            $_SESSION['login_error'] = "Invalid password.";
-            header("Location: login.php");
-            exit();
-        }
-
-    } else {
-        // Username Salah
-        $_SESSION['login_error'] = "Invalid username/email.";
+    // Cek error jaringan
+    if ($curl_error) {
+        $_SESSION['login_error'] = "Server Error: Tidak dapat menghubungi API.";
         header("Location: login.php");
         exit();
     }
-    
-    $stmt->close();
+
+    $result = json_decode($response, true);
+
+    // 4. LOGIKA SUKSES/GAGAL
+    if ($http_code == 200 && isset($result['accessToken'])) {
+        // --- LOGIN BERHASIL ---
+        
+        // Simpan Token
+        $_SESSION['access_token'] = $result['accessToken'];
+        $_SESSION['token_type'] = $result['tokenType'];
+        $_SESSION['username'] = $username;
+
+        $tokenParts = explode('.', $result['accessToken']);
+        
+        // Decode bagian Payload
+        $tokenPayload = base64_decode($tokenParts[1]);
+        $jwtData = json_decode($tokenPayload, true);
+
+        $role = 'user'; 
+        
+        // Logika pengecekan role di dalam JWT
+        if (isset($jwtData['roles'])) {
+            if (is_array($jwtData['roles']) && in_array('ROLE_ADMIN', $jwtData['roles'])) {
+                $role = 'admin';
+            } 
+            elseif ($jwtData['roles'] == 'ROLE_ADMIN') {
+                $role = 'admin';
+            }
+        }
+        
+        $_SESSION['role'] = $role;
+
+        // Redirect sesuai Role
+        if ($role == 'admin') {
+            header("Location: admin/dashboard.php");
+        } else {
+            header("Location: user/homepage.php");
+        }
+        exit();
+
+    } else {
+        $errorMsg = isset($result['message']) ? $result['message'] : "Username atau Password salah.";
+        $_SESSION['login_error'] = $errorMsg;
+        header("Location: login.php");
+        exit();
+    }
 }
 ?>
 
@@ -81,8 +113,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if (isset($_SESSION['login_error'])) {
                 echo '<div class="feedback error">' . $_SESSION['login_error'] . '</div>';
                 unset($_SESSION['login_error']);
-        
             } elseif (isset($_GET['status']) && $_GET['status'] == 'registered') {
+
                 echo '<div class="feedback success">Registration successful! Please log in with your account.</div>';
             }
             ?>
@@ -97,11 +129,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <button type="submit">Login</button>
             </form>
 
-                <div class="register-link">
-                    <p>Don't have an account? <a href="register.php">Register here</a></p>
-                </div>
-                
+            <div class="register-link">
+                <p>Don't have an account? <a href="register.php">Register here</a></p>
             </div>
+            
         </div>
     </div>
 </body>
