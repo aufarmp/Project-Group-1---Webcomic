@@ -3,15 +3,25 @@ package com.comic.repository;
 import com.comic.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
+import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    // 1. Cari berdasarkan Username (mirip EmpName di PDF)
+    // --- 1: SEARCH ---
+    
     List<User> findByUsernameContainingIgnoreCase(String username);
 
-    // 2. Cari berdasarkan Email (mirip EmpZipCode di PDF)
     List<User> findByEmailContainingIgnoreCase(String email);
 
-    // 3. Cari berdasarkan keduanya
     List<User> findByUsernameContainingIgnoreCaseAndEmailContainingIgnoreCase(String username, String email);
+
+
+    // --- 2: AUTHENTICATION ---
+    Optional<User> findByUsername(String username);
+
+    // Checking Available Username (For Register)
+    Boolean existsByUsername(String username);
+
+    // Checking Available Email (For Register)
+    Boolean existsByEmail(String email);
 }

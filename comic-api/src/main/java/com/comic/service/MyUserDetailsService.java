@@ -1,25 +1,29 @@
 package com.comic.service;
 
-import org.springframework.security.core.userdetails.User;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Service;
+
+import com.comic.model.User;
+import com.comic.repository.UserRepository;
 
 @Service
 public class MyUserDetailsService implements UserDetailsService {
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        if (!username.equals("admin")) {
-            throw new UsernameNotFoundException("User not found");
-        }
+    @Autowired
+    UserRepository userRepository;
 
-        // Hash baru ini PASTI untuk password: "123"
-        return User.builder()
-                .username("admin")
-                .password("$2a$10$2Mbusf71Q.jSJjzezb53y.uyCmtfyRPFk5FdV.kw4xv520FqXvBHK") 
-                .roles("ADMIN")
-                .build();
+    @Override
+    @Transactional
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username));
+
+        return UserDetailsImpl.build(user);
     }
 }
