@@ -69,6 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
         
+        // Safety check
         if (!isset($_SESSION['user_id'])) {
              $_SESSION['user_id'] = 0; 
         }
@@ -78,7 +79,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $jwtData = json_decode($tokenPayload, true);
 
         $role = 'user'; // Default
-
+        
         $roles_from_jwt = isset($jwtData['roles']) ? $jwtData['roles'] : [];
         
         if (!is_array($roles_from_jwt)) {
@@ -118,7 +119,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <link rel="stylesheet" href="../assets/css/login_style.css">
-</head>
+
+    <script type="text/javascript">
+        function preventBack() {
+            window.history.forward();
+        }
+        setTimeout("preventBack()", 0);
+        window.onunload = function() { null };
+    </script>
+    </head>
 <body>
     <div class="login-container">
         <div class="login-card">
