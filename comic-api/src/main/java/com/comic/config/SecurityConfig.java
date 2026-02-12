@@ -1,12 +1,12 @@
 package com.comic.config;
 
-import com.comic.service.MyUserDetailsService; // Import service Anda
+import com.comic.service.MyUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider; // Import Provider
-import org.springframework.security.config.Customizer; // Import Customizer
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -15,7 +15,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration; // Import CORS
+import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
@@ -71,7 +71,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/users").permitAll() // Register Public
                 .requestMatchers(HttpMethod.PUT, "/api/users/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/users/**").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN")
+                
+                .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasAuthority("admin")
 
                 // Comics
                 .requestMatchers(HttpMethod.GET, "/api/comics/**").permitAll()
@@ -80,7 +81,8 @@ public class SecurityConfig {
 
                 // Genres
                 .requestMatchers(HttpMethod.GET, "/api/genres/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/genres/**").hasRole("ADMIN")
+                
+                .requestMatchers(HttpMethod.POST, "/api/genres/**").hasAuthority("admin")
 
                 .anyRequest().authenticated()
             );

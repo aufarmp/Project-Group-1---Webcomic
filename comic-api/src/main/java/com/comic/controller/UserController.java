@@ -43,7 +43,6 @@ public class UserController {
         User dbUser = service.findById(id);
 
         // 2. Update field yang dikirim saja (Username, Email, Password)
-        // Jika data dikirim di JSON, update. Jika tidak, biarkan data lama.
         if (requestUser.getUsername() != null) {
             dbUser.setUsername(requestUser.getUsername());
         }

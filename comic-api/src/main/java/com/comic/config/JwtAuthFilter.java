@@ -1,6 +1,6 @@
 package com.comic.config;
 
-import com.comic.service.MyUserDetailsService; // 1. Import Service Anda
+import com.comic.service.MyUserDetailsService; 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,7 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource; // 2. Import untuk detail request
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource; 
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -43,7 +43,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (path.startsWith("/api/comics") && method.equals("GET")) return true;
         if (path.startsWith("/api/genres") && method.equals("GET")) return true;
 
-        if (path.startsWith("/api/users") && (method.equals("POST") || method.equals("PUT"))) return true;
+        if (path.startsWith("/api/users") && method.equals("POST")) return true;
 
         return false;
     }
