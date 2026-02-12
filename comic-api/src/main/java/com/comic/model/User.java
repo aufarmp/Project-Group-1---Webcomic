@@ -8,7 +8,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "tb_user")
-@Data // Generate Getter, Setter, toString, etc automactically
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {

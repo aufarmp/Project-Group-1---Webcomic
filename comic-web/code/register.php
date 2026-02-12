@@ -1,12 +1,16 @@
 <?php
 session_start();
-include 'connection.php';
+include 'connection.php'; 
+
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = mysqli_real_escape_string($conn, $_POST['username']);
     $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $password = mysqli_real_escape_string($conn, $_POST['password']);
-    
+    $password_raw = mysqli_real_escape_string($conn, $_POST['password']); 
+
     $check_sql = "SELECT user_id FROM tb_user WHERE username = ? OR email = ?";
     $stmt_check = mysqli_prepare($conn, $check_sql);
     mysqli_stmt_bind_param($stmt_check, "ss", $username, $email);
@@ -19,10 +23,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     }
 
-    $role = 'user'; // jika ada registrasi akun baru, role akan selalu 'user'
-    $insert_sql = "INSERT INTO tb_user (username, email, password, role) VALUES (?, ?, ?, ?)";
+    $password_hashed = password_hash($password_raw, PASSWORD_BCRYPT);
+    $role = 'user'; 
+    
+    $insert_sql = "INSERT INTO tb_user (username, email, password, role, created_at) VALUES (?, ?, ?, ?, NOW())";
+    
     $stmt_insert = mysqli_prepare($conn, $insert_sql);
-    mysqli_stmt_bind_param($stmt_insert, "ssss", $username, $email, $password, $role);
+
+    mysqli_stmt_bind_param($stmt_insert, "ssss", $username, $email, $password_hashed, $role);
 
     if (mysqli_stmt_execute($stmt_insert)) {
         header("Location: login.php?status=registered");
@@ -41,7 +49,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
-    <link rel="stylesheet" href="../assets/css/login_style.css"> </head>
+    <link rel="stylesheet" href="../assets/css/login_style.css"> 
+    <script type="text/javascript">
+        function preventBack() {
+            window.history.forward();
+        }
+        setTimeout("preventBack()", 0);
+        window.onunload = function() { null };
+    </script>
+</head>
 <body>
     <div class="login-container">
         <div class="login-card">

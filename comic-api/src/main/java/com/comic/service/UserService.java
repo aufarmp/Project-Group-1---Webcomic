@@ -3,14 +3,14 @@ package com.comic.service;
 import com.comic.model.User;
 import com.comic.repository.UserRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.security.crypto.password.PasswordEncoder; // Tambahan biar aman
+import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
 
 @Service
 public class UserService {
 
     private final UserRepository repo;
-    private final PasswordEncoder passwordEncoder; // Opsional: Untuk hash password user baru
+    private final PasswordEncoder passwordEncoder; // Untuk hash password user baru
 
     public UserService(UserRepository repo, PasswordEncoder passwordEncoder) {
         this.repo = repo;
